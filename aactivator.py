@@ -183,6 +183,7 @@ class ActivateConfig(object):
         )
         while True:
             print('Acceptable? (y)es (n)o (N)ever: ', file=sys.stderr, end='')
+            sys.stderr.flush()
             try:
                 response = self.get_input()
             # Allow ^D to be "no"

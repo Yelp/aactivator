@@ -15,7 +15,7 @@ import tempfile
 import pexpect
 import testify as T
 
-from . import aactivator
+import aactivator
 
 
 @contextlib.contextmanager
@@ -42,16 +42,12 @@ alias echo='echo "(aliased)"'
     return venv
 
 
-aactivator_path = os.path.realpath(aactivator.__file__.rstrip('c'))
-
-
 class TestBase(T.TestCase):
     temp_dir = None
 
     @T.setup_teardown
     def make_tempdir(self):
         with tempdir() as self.temp_dir:
-            os.symlink(aactivator_path, self.AACTIVATOR)
             yield
 
     @T.setup_teardown
@@ -60,10 +56,6 @@ class TestBase(T.TestCase):
         os.chdir('/')
         yield
         os.chdir(olddir)
-
-    @T.let
-    def AACTIVATOR(self):
-        return os.path.join(self.temp_dir, 'aactivator')
 
     @T.let
     def venv_path(self):
@@ -396,7 +388,7 @@ def expect_exact_better(proc, expected):
     reg = reg.replace('\n', '\r*\n')
     try:
         proc.expect(reg)
-    except pexpect.TIMEOUT:
+    except pexpect.TIMEOUT:  # pragma: no cover
         message = (
             'Incorrect output.',
             '>>> Context:',
@@ -480,7 +472,7 @@ class IntegrationTestBase(TestBase):
         make_venv_in_tempdir(self.temp_dir)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> echo
 
 TEST> cd {test.venv_path}
@@ -502,7 +494,7 @@ TEST> echo
         make_venv_in_tempdir(self.temp_dir)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> echo
 
 TEST> cd {test.venv_path}/child-dir
@@ -524,7 +516,7 @@ TEST> echo
         make_venv_in_tempdir(self.temp_dir)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> echo
 
 TEST> cd {test.venv_path}
@@ -537,7 +529,7 @@ TEST> echo
 TEST> {shell}
 TEST> echo
 
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 aactivating...
 TEST> echo 2
 (aliased) 2
@@ -561,7 +553,7 @@ TEST> echo 5
         os.chmod(self.activate, 0o666)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> echo
 
 TEST> cd {test.venv_path}
@@ -584,7 +576,7 @@ TEST> echo
         os.remove(self.deactivate)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> echo
 
 TEST> cd {test.venv_path}
@@ -606,7 +598,7 @@ TEST> echo
         make_venv_in_tempdir(self.temp_dir)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> echo
 
 TEST> cd {test.venv_path}
@@ -640,7 +632,7 @@ TEST> echo
         make_venv_in_tempdir(self.temp_dir)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> echo
 
 TEST> cd {test.temp_dir}/d
@@ -660,7 +652,7 @@ TEST> echo
         make_venv_in_tempdir(self.temp_dir)
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> cd {test.venv_path}
 aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
@@ -669,7 +661,7 @@ aactivating...
 TEST> export AACTIVATOR_VERSION=0
 aactivating...
 TEST> echo $AACTIVATOR_VERSION
-(aliased) 0.1
+(aliased) 1.0.0.dev1
 '''
         test = test.format(test=self)
         run_test(self.SHELL, test, self.temp_dir)
@@ -679,7 +671,7 @@ TEST> echo $AACTIVATOR_VERSION
         venv2 = make_venv_in_tempdir(self.temp_dir, 'venv2')
 
         test = '''\
-TEST> eval "$(python {test.AACTIVATOR} init)"
+TEST> eval "$(aactivator init)"
 TEST> cd {test.venv_path}/child-dir
 aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
@@ -720,9 +712,8 @@ class BashIntegrationTest(IntegrationTestBase):
 class ZshIntegrationTest(IntegrationTestBase):
     # -df is basically --norc
     # -V prevents a bizarre behavior where zsh prints lots of extra whitespace
-    # use find_executable to resolve the $PATH, so I can use my own zsh compilation.
     from distutils.spawn import find_executable
-    SHELL = (find_executable('zsh'), '-df', '-is', '-V', '+Z')
+    SHELL = ('zsh', '-df', '-is', '-V', '+Z')
 
     @property
     def errors(self):

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """\
 Usage: eval "$(aactivator init)"
@@ -34,13 +33,14 @@ import sys
 from os.path import relpath
 from pipes import quote
 
-# This script should not depend on anything but py26-stdlib
+import pkg_resources
 
 
 ENVIRONMENT_VARIABLE = 'AACTIVATOR_ACTIVE'
 ACTIVATE = '.activate.sh'
 DEACTIVATE = '.deactivate.sh'
-__version__ = '0.1'
+
+__version__ = pkg_resources.get_distribution('aactivator').version
 
 
 def init(arg0):
@@ -327,14 +327,10 @@ def aactivator(args, env):
         return __doc__ + '\nVersion: ' + __version__
 
 
-def main():  # pragma: no cover
-    from sys import argv
-    print(aactivator(tuple(argv), os.environ.copy()))
-
-
-if __name__ == '__main__':
+def main():
     try:
-        exit(main())
+        from sys import argv
+        print(aactivator(tuple(argv), os.environ.copy()))
     except KeyboardInterrupt:
-        # Silence ^C (WEBCORE-1150)
+        # Silence ^C
         pass

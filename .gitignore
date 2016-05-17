@@ -1,0 +1,5 @@
+/.tox
+/.coverage
+/.coverage.*
+
+*.py[co]

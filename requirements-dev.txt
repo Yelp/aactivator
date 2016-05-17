@@ -1,0 +1,5 @@
+coverage
+coverage-enable-subprocess
+ipdb
+pexpect
+testify

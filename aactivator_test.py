@@ -662,9 +662,9 @@ aactivating...
 TEST> export AACTIVATOR_VERSION=0
 aactivating...
 TEST> echo $AACTIVATOR_VERSION
-(aliased) 1.0.0.dev1
+(aliased) {version}
 '''
-        test = test.format(test=self)
+        test = test.format(test=self, version=aactivator.__version__)
         run_test(self.SHELL, test, self.temp_dir)
 
     def test_cd_dash(self):

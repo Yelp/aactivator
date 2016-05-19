@@ -390,17 +390,19 @@ def expect_exact_better(proc, expected):
         proc.expect(reg)
     except pexpect.TIMEOUT:  # pragma: no cover
         message = (
-            b'Incorrect output.',
-            b'>>> Context:',
-            before + after,
-            b'>>> Expected:',
-            b'    ' +
-            expected.replace('\r', '').replace('\n', '\n    ').encode('utf8'),
-            b'>>> Actual:',
-            b'    ' +
-            proc.buffer.replace(b'\r', b'').replace(b'\n', b'\n    '),
+            'Incorrect output.',
+            '>>> Context:',
+            before.decode('utf8') + after.decode('utf8'),
+            '>>> Expected:',
+            '    ' +
+            expected.replace('\r', '').replace('\n', '\n    '),
+            '>>> Actual:',
+            '    ' +
+            proc.buffer.replace(b'\r', b'').replace(b'\n', b'\n    ').decode('utf8'),
         )
-        message = b'\n'.join(message)
+        message = '\n'.join(message)
+        if sys.version_info < (3, 0):
+            message = message.encode('utf8')
         raise AssertionError(message)
 
 

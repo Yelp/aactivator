@@ -2,11 +2,7 @@ Source: aactivator
 Section: utils
 Priority: extra
 Maintainer: Chris Kuehl <ckuehl@yelp.com>
-Build-Depends: debhelper (>= 9),
-               dh-python,
-               python-all,
-               python-all-dev,
-               python-setuptools,
+Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.6
 Vcs-Git: https://github.com/Yelp/aactivator.git
 Vcs-Browser: https://github.com/Yelp/aactivator
@@ -14,7 +10,7 @@ Homepage: https://github.com/Yelp/aactivator
 
 Package: aactivator
 Architecture: all
-Depends: python2.7, python-setuptools
+Depends: python2.7
 Description: automatically activate virtual environments
  aactivator automatically activates environments when entering and exiting
  directories.

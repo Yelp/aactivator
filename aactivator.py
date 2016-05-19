@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 # -*- coding: UTF-8 -*-
 """\
 Usage: eval "$(aactivator init)"
@@ -33,14 +34,12 @@ import sys
 from os.path import relpath
 from pipes import quote
 
-import pkg_resources
-
 
 ENVIRONMENT_VARIABLE = 'AACTIVATOR_ACTIVE'
 ACTIVATE = '.activate.sh'
 DEACTIVATE = '.deactivate.sh'
 
-__version__ = pkg_resources.get_distribution('aactivator').version
+__version__ = '1.0.0.dev1'
 
 
 def init(arg0):
@@ -330,8 +329,15 @@ def aactivator(args, env):
 
 def main():
     try:
-        from sys import argv
-        print(aactivator(tuple(argv), os.environ.copy()))
-    except KeyboardInterrupt:
+        print(aactivator(tuple(sys.argv), os.environ.copy()))
+    except KeyboardInterrupt:  # pragma: no cover
+        # Silence ^C
+        pass
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:  # pragma: no cover
         # Silence ^C
         pass

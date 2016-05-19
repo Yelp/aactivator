@@ -1,9 +1,7 @@
 import io
 from setuptools import setup
+from aactivator import __version__
 
-
-with io.open('VERSION') as f:
-    version = f.read().strip()
 
 
 setup(
@@ -12,7 +10,7 @@ setup(
         'Automatically activate Python virtualenvs (and other environments).'
     ),
     url='https://github.com/Yelp/aactivator',
-    version=version,
+    version=__version__,
     author='Yelp',
     platforms='linux',
     classifiers=[

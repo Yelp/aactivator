@@ -1,9 +1,13 @@
 #!/usr/bin/make -f
-export PYBUILD_NAME=aactivator
-export DH_VERBOSE=1
-
 %:
-	dh $@ --with=python2 --buildsystem=pybuild
+	dh $@
 
-override_dh_python2:
-	dh_python2 --shebang=/usr/bin/python2.7
+override_dh_auto_build:
+	@true
+
+override_dh_auto_test:
+	@true
+
+override_dh_install:
+	mkdir -p debian/aactivator/usr/bin
+	cp aactivator.py debian/aactivator/usr/bin/aactivator

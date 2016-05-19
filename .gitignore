@@ -2,4 +2,5 @@
 /.coverage
 /.coverage.*
 
+*.deb
 *.py[co]

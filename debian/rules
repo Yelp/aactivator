@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+export PYBUILD_NAME=aactivator
+export DH_VERBOSE=1
+
+%:
+	dh $@ --with=python2 --buildsystem=pybuild
+
+override_dh_python2:
+	dh_python2 --shebang=/usr/bin/python2.7

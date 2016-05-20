@@ -3,358 +3,352 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import contextlib
 import functools
-import io
 import os.path
 import re
-import shutil
 import sys
-import tempfile
 
 import pexpect
-import testify as T
+import pytest
 
 import aactivator
 
 
-@contextlib.contextmanager
-def tempdir():
-    tmpdir = tempfile.mkdtemp()
-    try:
-        yield tmpdir
-    finally:
-        shutil.rmtree(tmpdir)
-
-
 def make_venv_in_tempdir(tmpdir, name='venv'):
-    venv = os.path.join(tmpdir, name)
-    os.makedirs(os.path.join(venv, 'child-dir'))
-    with open(os.path.join(venv, 'banner'), 'w') as banner:
+    venv = tmpdir.join(name)
+    venv.mkdir()
+    venv.join('child-dir').mkdir()
+    with venv.join('banner').open('w') as banner:
         banner.write('aactivating...\n')
-    with open(os.path.join(venv, '.activate.sh'), 'w') as a_file:
+    with venv.join('.activate.sh').open('w') as a_file:
         a_file.write('''\
 cat banner
 alias echo='echo "(aliased)"'
 ''')
-    with open(os.path.join(venv, '.deactivate.sh'), 'w') as d_file:
+    with venv.join('.deactivate.sh').open('w') as d_file:
         d_file.write('echo deactivating...\nunalias echo\n')
     return venv
 
 
-class TestBase(T.TestCase):
-    temp_dir = None
+@pytest.yield_fixture(autouse=True)
+def cwd():
+    olddir = os.getcwd()
+    os.chdir('/')
+    yield
+    os.chdir(olddir)
 
-    @T.setup_teardown
-    def make_tempdir(self):
-        with tempdir() as self.temp_dir:
-            yield
 
-    @T.setup_teardown
-    def cwd(self):
-        olddir = os.getcwd()
-        os.chdir('/')
-        yield
-        os.chdir(olddir)
+@pytest.fixture
+def venv_path(tmpdir):
+    return tmpdir.join('venv')
 
-    @T.let
-    def venv_path(self):
-        return os.path.join(self.temp_dir, 'venv')
 
-    @T.let
-    def activate(self):
-        return os.path.join(self.venv_path, '.activate.sh')
+@pytest.fixture
+def activate(venv_path):
+    return venv_path.join('.activate.sh')
 
-    @T.let
-    def deactivate(self):
-        return os.path.join(self.venv_path, '.deactivate.sh')
 
-    @T.let
-    def allowed_config(self):
-        return os.path.join(self.temp_dir, '.cache/aactivator/allowed')
+@pytest.fixture
+def deactivate(venv_path):
+    return venv_path.join('.deactivate.sh')
 
-    @T.let
-    def disallowed_config(self):
-        return os.path.join(self.temp_dir, '.cache/aactivator/disallowed')
 
-    @T.let
-    def inactive_env(self):
-        return (
-            ('HOME', self.temp_dir),
-            ('AACTIVATOR_VERSION', aactivator.__version__),
+@pytest.fixture
+def allowed_config(tmpdir):
+    return tmpdir.join('.cache/aactivator/allowed')
+
+
+@pytest.fixture
+def disallowed_config(tmpdir):
+    return tmpdir.join('.cache/aactivator/disallowed')
+
+
+@pytest.fixture
+def inactive_env(tmpdir):
+    return (
+        ('HOME', str(tmpdir)),
+        ('AACTIVATOR_VERSION', aactivator.__version__),
+    )
+
+
+@pytest.fixture
+def active_env(venv_path, inactive_env):
+    return inactive_env + (('AACTIVATOR_ACTIVE', str(venv_path)),)
+
+
+@pytest.fixture
+def f_path(tmpdir):
+    return tmpdir.join('f')
+
+
+def test_is_safe_to_source_fine(f_path):
+    f_path.open('a').close()
+    assert aactivator.insecure(str(f_path)) is None
+
+
+def test_is_safe_to_source_not_fine(f_path):
+    f_path.open('a').close()
+    f_path.chmod(0o666)
+    assert aactivator.insecure(str(f_path)) == str(f_path)
+
+
+def test_is_safe_to_source_also_not_fine(f_path):
+    f_path.open('a').close()
+    f_path.chmod(0o777)
+    assert aactivator.insecure(str(f_path)) == str(f_path)
+
+
+def test_directory_writeable_not_fine(tmpdir, f_path):
+    f_path.open('a').close()
+    tmpdir.chmod(0o777)
+    assert aactivator.insecure(str(f_path)) == str(tmpdir)
+
+
+def test_security_check_for_path_non_sourceable(tmpdir, f_path):
+    f_path.open('a').close()
+    f_path.chmod(0o666)
+    with tmpdir.as_cwd():
+        assert (
+            aactivator.security_check(str(f_path)) ==
+            'aactivator: Cowardly refusing to source f because writeable by others: f'
         )
 
-    @T.let
-    def active_env(self):
-        return self.inactive_env + (('AACTIVATOR_ACTIVE', self.venv_path),)
+
+def test_security_check_for_path_sourceable(f_path):
+    f_path.open('a').close()
+    assert aactivator.security_check(str(f_path)) is None
 
 
-class TestAutoSourceUnits(TestBase):
+def test_security_check_for_path_nonexistant(f_path):
+    assert (
+        aactivator.security_check(str(f_path)) ==
+        'aactivator: File does not exist: ' + str(f_path)
+    )
 
-    @T.class_setup_teardown
-    def no_stderr(self):
-        sys.stderr = open(os.devnull, 'w')
-        yield
-        sys.stderr = sys.__stderr__
 
-    @T.let
-    def f_path(self):
-        return os.path.join(self.temp_dir, 'f')
+def test_get_output_nothing_special(tmpdir, inactive_env):
+    output = aactivator.get_output(
+        dict(inactive_env),
+        str(tmpdir),
+    )
+    assert output == ''
 
-    def test_is_safe_to_source_fine(self):
-        open(self.f_path, 'a').close()
-        T.assert_equal(aactivator.insecure(self.f_path), None)
 
-    def test_is_safe_to_source_not_fine(self):
-        open(self.f_path, 'a').close()
-        os.chmod(self.f_path, 0o666)
-        T.assert_equal(aactivator.insecure(self.f_path), self.f_path)
+def test_get_output_already_sourced(tmpdir, venv_path, active_env):
+    make_venv_in_tempdir(tmpdir)
+    output = aactivator.get_output(
+        dict(active_env),
+        str(venv_path),
+        lambda: 'y',
+    )
+    assert output == ''
 
-    def test_is_safe_to_source_also_not_fine(self):
-        open(self.f_path, 'a').close()
-        os.chmod(self.f_path, 0o777)
-        T.assert_equal(aactivator.insecure(self.f_path), self.f_path)
 
-    def test_directory_writeable_not_fine(self):
-        open(self.f_path, 'a').close()
-        os.chmod(self.temp_dir, 0o777)
-        T.assert_equal(aactivator.insecure(self.f_path), self.temp_dir)
-
-    def test_security_check_for_path_non_sourceable(self):
-        open(self.f_path, 'a').close()
-        os.chmod(self.f_path, 0o666)
-        os.chdir(self.temp_dir)
-        T.assert_equal(
-            aactivator.security_check(self.f_path),
-            'aactivator: Cowardly refusing to source f because writeable by others: f',
-        )
-
-    def test_security_check_for_path_sourceable(self):
-        open(self.f_path, 'a').close()
-        T.assert_equal(
-            aactivator.security_check(self.f_path),
-            None,
-        )
-
-    def test_security_check_for_path_nonexistant(self):
-        T.assert_equal(
-            aactivator.security_check(self.f_path),
-            'aactivator: File does not exist: ' + self.f_path,
-        )
-
-    def test_get_output_nothing_special(self):
-        output = aactivator.get_output(
-            dict(self.inactive_env),
-            self.temp_dir,
-        )
-        T.assert_equal(output, '')
-
-    def test_get_output_already_sourced(self):
-        make_venv_in_tempdir(self.temp_dir)
-        output = aactivator.get_output(
-            dict(self.active_env),
-            self.venv_path,
-            lambda: 'y',
-        )
-        T.assert_equal(output, '')
-
-    def test_get_output_sourced_not_in_directory(self):
-        make_venv_in_tempdir(self.temp_dir)
-        output = aactivator.get_output(
-            dict(self.active_env),
-            self.temp_dir,
-        )
-        T.assert_equal(
-            output,
-            '''\
+def test_get_output_sourced_not_in_directory(tmpdir, venv_path, active_env):
+    make_venv_in_tempdir(tmpdir)
+    output = aactivator.get_output(
+        dict(active_env),
+        str(tmpdir),
+    )
+    assert (
+        output ==
+        '''\
 OLDPWD_bak="$OLDPWD" &&
-cd {test.venv_path} &&
+cd {venv_path} &&
 aactivator security-check .deactivate.sh &&
 source ./.deactivate.sh
 unset AACTIVATOR_ACTIVE &&
 cd "$OLDPWD_bak" &&
-cd {test.temp_dir} &&
-unset OLDPWD_bak'''.format(test=self)
-        )
+cd {tmpdir} &&
+unset OLDPWD_bak'''.format(venv_path=str(venv_path), tmpdir=str(tmpdir))
+    )
 
-    def test_get_output_sourced_deeper_in_directory(self):
-        make_venv_in_tempdir(self.temp_dir)
-        deeper = os.path.join(self.venv_path, 'deeper')
-        os.makedirs(deeper)
 
-        output = aactivator.get_output(
-            dict(self.active_env),
-            deeper,
-            lambda: 'y',
-        )
-        T.assert_equal(output, '')
+def test_get_output_sourced_deeper_in_directory(tmpdir, venv_path, active_env):
+    make_venv_in_tempdir(tmpdir)
+    deeper = venv_path.join('deeper')
+    deeper.mkdir()
 
-    def test_get_output_sourced_deeper_venv(self):
-        make_venv_in_tempdir(self.temp_dir)
-        deeper = make_venv_in_tempdir(self.venv_path, 'deeper')
+    output = aactivator.get_output(
+        dict(active_env),
+        str(deeper),
+        lambda: 'y',
+    )
+    assert output == ''
 
-        output = aactivator.get_output(
-            dict(self.active_env),
-            deeper,
-            lambda: 'y',
-        )
-        T.assert_equal(
-            output,
-            '''\
+
+def test_get_output_sourced_deeper_venv(tmpdir, venv_path, active_env):
+    make_venv_in_tempdir(tmpdir)
+    deeper = make_venv_in_tempdir(venv_path, 'deeper')
+
+    output = aactivator.get_output(
+        dict(active_env),
+        str(deeper),
+        lambda: 'y',
+    )
+    assert (
+        output ==
+        '''\
 OLDPWD_bak="$OLDPWD" &&
-cd {test.venv_path} &&
+cd {venv_path} &&
 aactivator security-check .deactivate.sh &&
 source ./.deactivate.sh
 unset AACTIVATOR_ACTIVE &&
 cd "$OLDPWD_bak" &&
-cd {test.venv_path}/deeper &&
+cd {venv_path}/deeper &&
 unset OLDPWD_bak &&
 aactivator security-check .activate.sh &&
 source ./.activate.sh &&
-export AACTIVATOR_ACTIVE={test.venv_path}/deeper'''.format(test=self)
-        )
+export AACTIVATOR_ACTIVE={venv_path}/deeper'''.format(venv_path=str(venv_path))
+    )
 
-    def test_not_sourced_sources(self):
-        make_venv_in_tempdir(self.temp_dir)
-        output = aactivator.get_output(
-            dict(self.inactive_env),
-            self.venv_path,
-            lambda: 'y',
-        )
-        T.assert_equal(
-            output,
-            '''\
+
+def test_not_sourced_sources(tmpdir, venv_path, inactive_env):
+    make_venv_in_tempdir(tmpdir)
+    output = aactivator.get_output(
+        dict(inactive_env),
+        str(venv_path),
+        lambda: 'y',
+    )
+    assert (
+        output ==
+        '''\
 aactivator security-check .activate.sh &&
 source ./.activate.sh &&
-export AACTIVATOR_ACTIVE=''' + self.venv_path
-        )
+export AACTIVATOR_ACTIVE=''' + str(venv_path)
+    )
 
-    def test_get_output_change_venv(self):
-        make_venv_in_tempdir(self.temp_dir)
-        venv2 = make_venv_in_tempdir(self.temp_dir, 'venv2')
-        output = aactivator.get_output(
-            dict(self.active_env),
-            venv2,
-            lambda: 'y',
-        )
-        T.assert_equal(
-            output,
-            '''\
+
+def test_get_output_change_venv(tmpdir, venv_path, active_env):
+    make_venv_in_tempdir(tmpdir)
+    venv2 = make_venv_in_tempdir(tmpdir, 'venv2')
+    output = aactivator.get_output(
+        dict(active_env),
+        str(venv2),
+        lambda: 'y',
+    )
+    assert (
+        output ==
+        '''\
 OLDPWD_bak="$OLDPWD" &&
-cd {test.venv_path} &&
+cd {venv_path} &&
 aactivator security-check .deactivate.sh &&
 source ./.deactivate.sh
 unset AACTIVATOR_ACTIVE &&
 cd "$OLDPWD_bak" &&
-cd {test.venv_path}2 &&
+cd {venv_path}2 &&
 unset OLDPWD_bak &&
 aactivator security-check .activate.sh &&
 source ./.activate.sh &&
-export AACTIVATOR_ACTIVE={test.venv_path}2'''.format(test=self)
-        )
+export AACTIVATOR_ACTIVE={venv_path}2'''.format(venv_path=str(venv_path))
+    )
 
-    def test_get_output_pwd_goes_missing(self):
-        make_venv_in_tempdir(self.temp_dir)
-        os.chdir(self.venv_path)
-        shutil.rmtree(self.venv_path)
+
+def test_get_output_pwd_goes_missing(tmpdir, venv_path, inactive_env):
+    make_venv_in_tempdir(tmpdir)
+    with venv_path.as_cwd():
+        venv_path.remove(rec=1)
         output = aactivator.get_output(
-            dict(self.inactive_env),
-            self.venv_path,
+            dict(inactive_env),
+            str(venv_path),
             lambda: 'n',
         )
-        T.assert_equal(output, '')
+    assert output == ''
 
-    def config(self, answer):
-        return aactivator.ActivateConfig(
-            dict(self.inactive_env),
-            lambda: print(answer, file=sys.stderr) or answer,
-        )
 
-    @property
-    def yes_config(self):
-        return self.config('y')
+def config(inactive_env, answer):
+    return aactivator.ActivateConfig(
+        dict(inactive_env),
+        lambda: print(answer, file=sys.stderr) or answer,
+    )
 
-    @property
-    def no_config(self):
-        return self.config('n')
 
-    @property
-    def never_config(self):
-        return self.config('N')
+@pytest.fixture
+def yes_config(inactive_env):
+    return lambda: config(inactive_env, 'y')
 
-    @property
-    def eof_config(self):
-        def raise_eoferror():
-            raise EOFError()
-        return aactivator.ActivateConfig(
-            dict(self.inactive_env), raise_eoferror,
-        )
 
-    def test_prompt_loop_answer_yes(self):
-        make_venv_in_tempdir(self.temp_dir)
-        T.assert_equal(
-            self.yes_config.find_allowed(self.venv_path), self.venv_path,
-        )
-        T.assert_is(os.path.exists(self.allowed_config), True)
-        T.assert_equal(
-            io.open(self.allowed_config).read(), self.venv_path + '\n',
-        )
+@pytest.fixture
+def no_config(inactive_env):
+    return lambda: config(inactive_env, 'n')
 
-    def test_no_config_not_allowed(self):
-        make_venv_in_tempdir(self.temp_dir)
-        T.assert_is(self.no_config.find_allowed(self.venv_path), None)
-        # Saying no should not permanently save anything
-        T.assert_is(os.path.exists(self.allowed_config), False)
-        T.assert_is(os.path.exists(self.disallowed_config), False)
 
-    def test_eof_treated_like_no(self):
-        make_venv_in_tempdir(self.temp_dir)
-        T.assert_is(self.eof_config.find_allowed(self.venv_path), None)
-        # Saying no should not permanently save anything
-        T.assert_is(os.path.exists(self.allowed_config), False)
-        T.assert_is(os.path.exists(self.disallowed_config), False)
+@pytest.fixture
+def never_config(inactive_env):
+    print(inactive_env)
+    return lambda: config(inactive_env, 'N')
 
-    def test_never_config_not_allowed(self):
-        make_venv_in_tempdir(self.temp_dir)
-        T.assert_is(self.never_config.find_allowed(self.venv_path), None)
-        T.assert_is(os.path.exists(self.disallowed_config), True)
-        T.assert_equal(
-            io.open(self.disallowed_config).read(), self.venv_path + '\n'
-        )
 
-    def test_yes_config_is_remembered(self):
-        make_venv_in_tempdir(self.temp_dir)
-        T.assert_equal(
-            self.yes_config.find_allowed(self.venv_path), self.venv_path,
-        )
-        T.assert_equal(
-            self.no_config.find_allowed(self.venv_path), self.venv_path,
-        )
+@pytest.fixture
+def eof_config(inactive_env):
+    def raise_eoferror():
+        raise EOFError()
+    return functools.partial(
+        aactivator.ActivateConfig,
+        dict(inactive_env),
+        raise_eoferror,
+    )
 
-    def test_never_is_remembered(self):
-        make_venv_in_tempdir(self.temp_dir)
-        T.assert_is(self.never_config.find_allowed(self.venv_path), None)
-        T.assert_is(self.yes_config.find_allowed(self.venv_path), None)
 
-    def test_not_owned_by_me_is_not_activatable(self):
-        make_venv_in_tempdir(self.temp_dir)
-        T.assert_is(
-            self.yes_config.is_allowed(self.activate, _getuid=lambda: -1),
-            False,
-        )
+def test_prompt_loop_answer_yes(tmpdir, venv_path, yes_config, allowed_config):
+    make_venv_in_tempdir(tmpdir)
+    assert yes_config().find_allowed(str(venv_path)) == str(venv_path)
+    assert allowed_config.check(file=1)
+    assert allowed_config.read() == venv_path + '\n'
 
-    def test_no_is_remembered_until_cd_out(self):
-        venv = make_venv_in_tempdir(self.temp_dir)
-        T.assert_is(self.no_config.find_allowed(self.venv_path), None)
-        T.assert_is(self.yes_config.find_allowed(self.venv_path), None)
 
-        # cd to a child directory shouldn't forget the answer
-        child_dir = os.path.join(venv, 'child-dir')
-        T.assert_is(self.yes_config.find_allowed(child_dir), None)
+def test_no_config_not_allowed(tmpdir, venv_path, no_config, allowed_config, disallowed_config):
+    make_venv_in_tempdir(tmpdir)
+    assert no_config().find_allowed(str(venv_path)) is None
+    # Saying no should not permanently save anything
+    assert allowed_config.check(exists=0)
+    assert disallowed_config.check(exists=0)
 
-        # cd to a parent directory directory (and back) should
-        T.assert_is(self.yes_config.find_allowed('/'), None)
-        T.assert_equal(self.yes_config.find_allowed(child_dir), self.venv_path)
+
+def test_eof_treated_like_no(tmpdir, venv_path, eof_config, allowed_config, disallowed_config):
+    make_venv_in_tempdir(tmpdir)
+    assert eof_config().find_allowed(str(venv_path)) is None
+    # Saying no should not permanently save anything
+    assert allowed_config.check(exists=0)
+    assert disallowed_config.check(exists=0)
+
+
+def test_never_config_not_allowed(tmpdir, venv_path, never_config, allowed_config, disallowed_config):
+    make_venv_in_tempdir(tmpdir)
+    assert never_config().find_allowed(str(venv_path)) is None
+    assert disallowed_config.check(file=1)
+    assert disallowed_config.read() == str(venv_path) + '\n'
+
+
+def test_yes_config_is_remembered(tmpdir, venv_path, yes_config, no_config):
+    make_venv_in_tempdir(tmpdir)
+    assert yes_config().find_allowed(str(venv_path)) == str(venv_path)
+    assert no_config().find_allowed(str(venv_path)) == str(venv_path)
+
+
+def test_never_is_remembered(tmpdir, venv_path, never_config, yes_config):
+    make_venv_in_tempdir(tmpdir)
+    assert never_config().find_allowed(str(venv_path)) is None
+    assert yes_config().find_allowed(str(venv_path)) is None
+
+
+def test_not_owned_by_me_is_not_activatable(tmpdir, activate, yes_config):
+    make_venv_in_tempdir(tmpdir)
+    assert yes_config().is_allowed(str(activate), _getuid=lambda: -1) is False
+
+
+def test_no_is_remembered_until_cd_out(venv_path, tmpdir, no_config, yes_config):
+    venv = make_venv_in_tempdir(tmpdir)
+    assert no_config().find_allowed(str(venv_path)) is None
+    assert yes_config().find_allowed(str(venv_path)) is None
+
+    # cd to a child directory shouldn't forget the answer
+    child_dir = venv.join('child-dir')
+    assert yes_config().find_allowed(str(child_dir)) is None
+
+    # cd to a parent directory directory (and back) should
+    assert yes_config().find_allowed('/') is None
+    assert yes_config().find_allowed(str(child_dir)) == str(venv_path)
 
 
 PS1 = 'TEST> '
@@ -371,7 +365,7 @@ def get_proc(shell, homedir):
             ),
             'PS1': PS1,
             'TOP': os.environ.get('TOP', ''),
-            'HOME': homedir,
+            'HOME': str(homedir),
             'PATH': os.path.dirname(sys.executable) + os.defpath
         },
     )
@@ -460,24 +454,40 @@ def shellquote(cmd):
 
 
 def run_test(shell, tests, homedir):
-    proc = get_proc(shell, homedir)
+    proc = get_proc(shell['cmd'], homedir)
     for test_fn, test, output in parse_tests(tests):
         test_fn(proc, test, output)
 
 
-class IntegrationTestBase(TestBase):
-    __test__ = False
-    SHELL = None
+@pytest.fixture(params=(
+    {
+        'cmd': ('/bin/bash', '--noediting', '--norc', '-is'),
+        'errors': {
+            'pwd_missing': 'bash: cd: {tmpdir}/d: No such file or directory',
+        },
+    },
+    {
+        # -df is basically --norc
+        # -V prevents a bizarre behavior where zsh prints lots of extra whitespace
+        'cmd': ('zsh', '-df', '-is', '-V', '+Z'),
+        'errors': {
+            'pwd_missing': 'cd: no such file or directory: {tmpdir}/d',
+        },
+    },
+))
+def shell(request):
+    return request.param
 
-    def test_activates_when_cding_in(self):
-        make_venv_in_tempdir(self.temp_dir)
 
-        test = '''\
+def test_activates_when_cding_in(venv_path, shell, tmpdir):
+    make_venv_in_tempdir(tmpdir)
+
+    test = '''\
 TEST> eval "$(aactivator init)"
 TEST> echo
 
-TEST> cd {test.venv_path}
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
 aactivator will remember this: ~/.cache/aactivator/allowed
 aactivating...
@@ -488,18 +498,19 @@ TEST> cd /
 TEST> echo
 
 '''
-        test = test.format(test=self)
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(venv_path=str(venv_path))
+    run_test(shell, test, tmpdir)
 
-    def test_activates_when_cding_to_child_dir(self):
-        make_venv_in_tempdir(self.temp_dir)
 
-        test = '''\
+def test_activates_when_cding_to_child_dir(venv_path, tmpdir, shell):
+    make_venv_in_tempdir(tmpdir)
+
+    test = '''\
 TEST> eval "$(aactivator init)"
 TEST> echo
 
-TEST> cd {test.venv_path}/child-dir
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}/child-dir
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
 aactivator will remember this: ~/.cache/aactivator/allowed
 aactivating...
@@ -510,18 +521,19 @@ TEST> cd /
 TEST> echo
 
 '''
-        test = test.format(test=self)
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(venv_path=str(venv_path))
+    run_test(shell, test, tmpdir)
 
-    def test_activates_subshell(self):
-        make_venv_in_tempdir(self.temp_dir)
 
-        test = '''\
+def test_activates_subshell(venv_path, tmpdir, shell):
+    make_venv_in_tempdir(tmpdir)
+
+    test = '''\
 TEST> eval "$(aactivator init)"
 TEST> echo
 
-TEST> cd {test.venv_path}
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
 aactivator will remember this: ~/.cache/aactivator/allowed
 aactivating...
@@ -546,19 +558,23 @@ TEST> cd /
 TEST> echo 5
 5
 '''
-        test = test.format(test=self, shell=shellquote(self.SHELL))
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(
+        venv_path=str(venv_path),
+        shell=shellquote(shell['cmd']),
+    )
+    run_test(shell, test, tmpdir)
 
-    def test_complains_when_not_activated(self):
-        make_venv_in_tempdir(self.temp_dir)
-        os.chmod(self.activate, 0o666)
 
-        test = '''\
+def test_complains_when_not_activated(activate, venv_path, tmpdir, shell):
+    make_venv_in_tempdir(tmpdir)
+    activate.chmod(0o666)
+
+    test = '''\
 TEST> eval "$(aactivator init)"
 TEST> echo
 
-TEST> cd {test.venv_path}
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
 aactivator will remember this: ~/.cache/aactivator/allowed
 aactivator: Cowardly refusing to source .activate.sh because writeable by others: .activate.sh
@@ -569,41 +585,46 @@ TEST> cd /
 TEST> echo
 
 '''
-        test = test.format(test=self)
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(venv_path=str(venv_path))
+    run_test(shell, test, tmpdir)
 
-    def test_activate_but_no_deactivate(self):
-        make_venv_in_tempdir(self.temp_dir)
-        os.remove(self.deactivate)
 
-        test = '''\
+def test_activate_but_no_deactivate(venv_path, tmpdir, deactivate, shell):
+    make_venv_in_tempdir(tmpdir)
+    deactivate.remove()
+
+    test = '''\
 TEST> eval "$(aactivator init)"
 TEST> echo
 
-TEST> cd {test.venv_path}
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
 aactivator will remember this: ~/.cache/aactivator/allowed
 aactivating...
 TEST> echo
 (aliased)
 TEST> cd /
-(aliased) aactivator: Cannot deactivate. File missing: {test.deactivate}
+(aliased) aactivator: Cannot deactivate. File missing: {deactivate}
 TEST> echo
 (aliased)
 '''
-        test = test.format(test=self)
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(
+        venv_path=str(venv_path),
+        deactivate=str(deactivate),
+    )
+    run_test(shell, test, tmpdir)
 
-    def test_prompting_behaviour(self):
-        make_venv_in_tempdir(self.temp_dir)
 
-        test = '''\
+def test_prompting_behavior(venv_path, tmpdir, shell):
+    make_venv_in_tempdir(tmpdir)
+
+    test = '''\
 TEST> eval "$(aactivator init)"
 TEST> echo
 
-TEST> cd {test.venv_path}
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> herpderp
 I didn't understand your response.
 
@@ -615,8 +636,8 @@ TEST> echo
 TEST> echo
 
 TEST> cd /
-TEST> cd {test.venv_path}
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> N
 aactivator will remember this: ~/.cache/aactivator/disallowed
 TEST> echo
@@ -625,37 +646,43 @@ TEST> cd /
 TEST> echo
 
 '''
-        test = test.format(test=self)
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(venv_path=str(venv_path))
+    run_test(shell, test, tmpdir)
 
-    def test_pwd_goes_missing(self):
-        os.mkdir(os.path.join(self.temp_dir, 'd'))
-        make_venv_in_tempdir(self.temp_dir)
 
-        test = '''\
+def test_pwd_goes_missing(tmpdir, shell):
+    tmpdir.join('d').mkdir()
+    make_venv_in_tempdir(tmpdir)
+
+    test = '''\
 TEST> eval "$(aactivator init)"
 TEST> echo
 
-TEST> cd {test.temp_dir}/d
+TEST> cd {{tmpdir}}/d
 TEST> rm -rf $PWD
 TEST> cd $PWD
-{test.errors.pwd_missing}
+{pwd_missing}
 TEST> echo
 
 TEST> echo
 
 '''
-        test = test.format(test=self)
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(
+        pwd_missing=shell['errors']['pwd_missing'],
+    ).format(
+        tmpdir=str(tmpdir),
+    )
+    run_test(shell, test, tmpdir)
 
-    def test_version_change(self):
-        """If aactivator detects a version change, it will re-init and re-activate"""
-        make_venv_in_tempdir(self.temp_dir)
 
-        test = '''\
+def test_version_change(venv_path, tmpdir, shell):
+    """If aactivator detects a version change, it will re-init and re-activate"""
+    make_venv_in_tempdir(tmpdir)
+
+    test = '''\
 TEST> eval "$(aactivator init)"
-TEST> cd {test.venv_path}
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
 aactivator will remember this: ~/.cache/aactivator/allowed
 aactivating...
@@ -664,22 +691,26 @@ aactivating...
 TEST> echo $AACTIVATOR_VERSION
 (aliased) {version}
 '''
-        test = test.format(test=self, version=aactivator.__version__)
-        run_test(self.SHELL, test, self.temp_dir)
+    test = test.format(
+        venv_path=str(venv_path),
+        version=aactivator.__version__,
+    )
+    run_test(shell, test, tmpdir)
 
-    def test_cd_dash(self):
-        make_venv_in_tempdir(self.temp_dir)
-        venv2 = make_venv_in_tempdir(self.temp_dir, 'venv2')
 
-        test = '''\
+def test_cd_dash(venv_path, tmpdir, shell):
+    make_venv_in_tempdir(tmpdir)
+    venv2 = make_venv_in_tempdir(tmpdir, 'venv2')
+
+    test = '''\
 TEST> eval "$(aactivator init)"
-TEST> cd {test.venv_path}/child-dir
-aactivator will source .activate.sh and .deactivate.sh at {test.venv_path}.
+TEST> cd {venv_path}/child-dir
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
 aactivator will remember this: ~/.cache/aactivator/allowed
 aactivating...
 TEST> pwd
-{test.venv_path}/child-dir
+{venv_path}/child-dir
 TEST> cd {venv2}/child-dir
 aactivator will source .activate.sh and .deactivate.sh at {venv2}.
 Acceptable? (y)es (n)o (N)ever: INPUT> y
@@ -690,34 +721,15 @@ TEST> cd - > /dev/null
 (aliased) deactivating...
 aactivating...
 TEST> pwd
-{test.venv_path}/child-dir
+{venv_path}/child-dir
 TEST> cd - > /dev/null
 (aliased) deactivating...
 aactivating...
 TEST> pwd
 {venv2}/child-dir
 '''
-        test = test.format(test=self, venv2=venv2)
-        run_test(self.SHELL, test, self.temp_dir)
-
-
-class BashIntegrationTest(IntegrationTestBase):
-    SHELL = ('/bin/bash', '--noediting', '--norc', '-is')
-
-    @property
-    def errors(self):
-        class errors(object):
-            pwd_missing = 'bash: cd: {test.temp_dir}/d: No such file or directory'.format(test=self)
-        return errors
-
-
-class ZshIntegrationTest(IntegrationTestBase):
-    # -df is basically --norc
-    # -V prevents a bizarre behavior where zsh prints lots of extra whitespace
-    SHELL = ('zsh', '-df', '-is', '-V', '+Z')
-
-    @property
-    def errors(self):
-        class errors(object):
-            pwd_missing = 'cd: no such file or directory: {test.temp_dir}/d'.format(test=self)
-        return errors
+    test = test.format(
+        venv_path=str(venv_path),
+        venv2=str(venv2),
+    )
+    run_test(shell, test, tmpdir)

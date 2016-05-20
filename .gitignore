@@ -1,6 +1,7 @@
-/.tox
+/.cache
 /.coverage
 /.coverage.*
+/.tox
 
 *.deb
 *.py[co]

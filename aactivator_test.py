@@ -15,18 +15,14 @@ import aactivator
 
 
 def make_venv_in_tempdir(tmpdir, name='venv'):
-    venv = tmpdir.join(name)
-    venv.mkdir()
-    venv.join('child-dir').mkdir()
-    with venv.join('banner').open('w') as banner:
-        banner.write('aactivating...\n')
-    with venv.join('.activate.sh').open('w') as a_file:
-        a_file.write('''\
+    venv = tmpdir.mkdir(name)
+    venv.mkdir('child-dir')
+    venv.join('banner').write('aactivating...\n')
+    venv.join('.activate.sh').write('''\
 cat banner
 alias echo='echo "(aliased)"'
 ''')
-    with venv.join('.deactivate.sh').open('w') as d_file:
-        d_file.write('echo deactivating...\nunalias echo\n')
+    venv.join('.deactivate.sh').write('echo deactivating...\nunalias echo\n')
     return venv
 
 
@@ -166,8 +162,7 @@ unset OLDPWD_bak'''.format(venv_path=str(venv_path), tmpdir=str(tmpdir))
 
 def test_get_output_sourced_deeper_in_directory(tmpdir, venv_path, active_env):
     make_venv_in_tempdir(tmpdir)
-    deeper = venv_path.join('deeper')
-    deeper.mkdir()
+    deeper = venv_path.mkdir('deeper')
 
     output = aactivator.get_output(
         dict(active_env),
@@ -275,7 +270,6 @@ def no_config(inactive_env):
 
 @pytest.fixture
 def never_config(inactive_env):
-    print(inactive_env)
     return lambda: config(inactive_env, 'N')
 
 
@@ -651,7 +645,7 @@ TEST> echo
 
 
 def test_pwd_goes_missing(tmpdir, shell):
-    tmpdir.join('d').mkdir()
+    tmpdir.mkdir('d')
     make_venv_in_tempdir(tmpdir)
 
     test = '''\

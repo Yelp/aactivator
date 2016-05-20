@@ -1,0 +1,6 @@
+coverage
+coverage-enable-subprocess
+ipdb
+pexpect
+pre-commit
+pytest

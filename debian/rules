@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_build:
+	@true
+
+override_dh_auto_test:
+	@true
+
+override_dh_install:
+	mkdir -p debian/aactivator/usr/bin
+	cp aactivator.py debian/aactivator/usr/bin/aactivator

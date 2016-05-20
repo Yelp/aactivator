@@ -1,0 +1,19 @@
+Source: aactivator
+Section: utils
+Priority: extra
+Maintainer: Chris Kuehl <ckuehl@yelp.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.6
+Vcs-Git: https://github.com/Yelp/aactivator.git
+Vcs-Browser: https://github.com/Yelp/aactivator
+Homepage: https://github.com/Yelp/aactivator
+
+Package: aactivator
+Architecture: all
+Depends: python2.7
+Description: automatically activate virtual environments
+ aactivator automatically activates environments when entering and exiting
+ directories.
+ .
+ By default, aactivator is not enabled. To opt-in to aactivator in your shell,
+ add `eval "$(aactivator init)"` somewhere to your shell's rc files.

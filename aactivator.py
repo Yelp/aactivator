@@ -127,6 +127,7 @@ def _get_lines_if_there(path):
 
 
 class ConfigFile(object):
+
     def __init__(self, directory, name):
         self.path = os.path.join(directory, name)
         self.lines = frozenset(_get_lines_if_there(self.path))
@@ -157,6 +158,7 @@ def user_cache_dir(env):
 
 
 class ActivateConfig(object):
+
     def __init__(self, env, get_input):
         self.env = env
         self.get_input = get_input

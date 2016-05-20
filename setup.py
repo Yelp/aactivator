@@ -1,7 +1,6 @@
-import io
 from setuptools import setup
-from aactivator import __version__
 
+from aactivator import __version__
 
 
 setup(

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import contextlib
 import functools
@@ -89,8 +89,8 @@ class TestBase(T.TestCase):
         return self.inactive_env + (('AACTIVATOR_ACTIVE', self.venv_path),)
 
 
-
 class TestAutoSourceUnits(TestBase):
+
     @T.class_setup_teardown
     def no_stderr(self):
         sys.stderr = open(os.devnull, 'w')
@@ -710,10 +710,10 @@ class BashIntegrationTest(IntegrationTestBase):
             pwd_missing = 'bash: cd: {test.temp_dir}/d: No such file or directory'.format(test=self)
         return errors
 
+
 class ZshIntegrationTest(IntegrationTestBase):
     # -df is basically --norc
     # -V prevents a bizarre behavior where zsh prints lots of extra whitespace
-    from distutils.spawn import find_executable
     SHELL = ('zsh', '-df', '-is', '-V', '+Z')
 
     @property

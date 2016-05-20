@@ -340,6 +340,6 @@ def main():
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except KeyboardInterrupt:  # pragma: no cover
+    except KeyboardInterrupt:
         # Silence ^C
         pass

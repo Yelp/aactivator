@@ -11,3 +11,7 @@ override_dh_auto_test:
 override_dh_install:
 	mkdir -p debian/aactivator/usr/bin
 	cp aactivator.py debian/aactivator/usr/bin/aactivator
+
+override_dh_builddeb:
+	# Use gzip instead of xz to support ubuntu:lucid.
+	dh_builddeb -- -Zgzip

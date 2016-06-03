@@ -1,0 +1,5 @@
+debian/aactivator
+
+.git
+.tox
+*.swp

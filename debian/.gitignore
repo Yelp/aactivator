@@ -3,3 +3,4 @@
 /*.debhelper
 /*.substvars
 /aactivator
+/debhelper-build-stamp

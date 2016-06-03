@@ -1,0 +1,38 @@
+#!/bin/bash -eux
+# This script gets run inside the itest Docker containers.
+set -o pipefail
+
+# We need to set standard /tmp permissions since it's a Docker volume.
+chmod 1777 /tmp
+
+apt-get update
+
+if grep -qE '\<lucid\>' /etc/apt/sources.list; then
+    apt-get install -y --no-install-recommends python-software-properties
+
+    # for python2.7 backport
+    add-apt-repository ppa:fkrull/deadsnakes
+    # for zsh 5 backport (lucid's zsh segfaults)
+    add-apt-repository ppa:blueyed/ppa
+
+    apt-get update
+fi
+
+apt-get install -y --no-install-recommends \
+    bash \
+    build-essential \
+    ca-certificates \
+    curl \
+    python-setuptools \
+    python2.7 \
+    python2.7-dev \
+    zsh
+
+curl https://bootstrap.pypa.io/get-pip.py | python2.7
+dpkg -i /mnt/dist/*.deb
+pip install -r /mnt/requirements-dev.txt
+pip install /mnt
+
+# pytest can't deal with a read-only filesystem
+cp -r /mnt /tmp/test
+py.test -vv /tmp/test

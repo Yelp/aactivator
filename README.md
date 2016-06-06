@@ -13,6 +13,9 @@ Key features of aactivator include:
 * First-class support for both `bash` and `zsh`.
 * Well-tested, with integration tests applied to both supported shells.
 
+aactivator supports Python 2.7, 3.4, and 3.5; it has no dependencies besides
+the standard library.
+
 
 ## The aactivator interface
 
@@ -23,12 +26,18 @@ of the project:
 
   If working with Python virtualenvs, it usually makes the most sense to
   symlink `.activate.sh` to the `bin/activate` file inside your virtualenv.
-  For example, `ln -s venv/bin/activate .activate.sh`.
+  For example, `ln -s venv/bin/activate .activate.sh`. This symlink can be
+  checked directly into git (just make sure to use a relative symlink, like in
+  the command before).
 
-* `.deactivate.sh`, which is sourced by the shell on enter.
+* `.deactivate.sh`, which is sourced by the shell on exit.
 
-  Typically, this is a one-line file that contains just `deactivate`, though it
-  can be modified to suit your particular project.
+  For Python projects, this is typically just a one-line file that contains
+  `deactivate`, though it can be modified to suit your particular project.
+
+Note that neither of these files need to be executable or contain a shebang.
+This is because they are *sourced* (run inside your current shell) and not
+*executed*.
 
 
 ## Installing into your shell
@@ -40,9 +49,9 @@ when you `cd` into a project directory that supports aactivator.
 You first need to install the `aactivator` binary somewhere on your system. You
 have a few options:
 
-1. Just copy the `aactivator.py` script somewhere on your system and make it
-   executable (`chmod +x aactivator.py`). It has no dependencies besides the
-   Python 2.7 standard library.
+1. Just copy the [`aactivator.py` script][aactivator.py-master] somewhere on
+   your system and make it executable (`chmod +x aactivator.py`). It has no
+   dependencies besides the Python standard library.
 
 2. Install it via pip (`pip install aactivator`). You can install system-wide,
    to your home directory, or into a virtualenv (your preference).
@@ -52,8 +61,9 @@ have a few options:
    You can find pre-built Debian packages under the [Releases][releases] GitHub
    tab.
 
-Once you have `aactivator` installed, you need to source it on login. To do
-that, just add this line to your `.bashrc` (or `.zshrc` for zsh):
+Once you have `aactivator` installed, you need to enable it on login. To do
+that, just add this line to the `.bashrc` (or `.zshrc` for zsh) file in your
+home directory:
 
     eval "$(aactivator init)"
 
@@ -107,6 +117,7 @@ aactivator):
 * Don't perform important security checks (see "Security" above)
 
 
+[aactivator.py-master]: https://github.com/Yelp/aactivator/blob/master/aactivator.py
 [autoenv]: https://github.com/kennethreitz/autoenv
 [codysoyland]: https://gist.github.com/codysoyland/2198913
 [releases]: https://github.com/Yelp/aactivator/releases

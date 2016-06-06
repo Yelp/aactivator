@@ -2,6 +2,7 @@ aactivator
 ========
 
 [![PyPI version](https://badge.fury.io/py/aactivator.svg)](https://pypi.python.org/pypi/aactivator)
+[![Build Status](https://travis-ci.org/Yelp/aactivator.svg?branch=master)](https://travis-ci.org/Yelp/aactivator)
 
 `aactivator` is a simple tool that automatically sources ("activates") and
 unsources a project's environment when entering and exiting it.

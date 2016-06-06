@@ -1,0 +1,26 @@
+sudo: required
+
+services:
+    - docker
+
+language: python
+
+env:
+    - MAKE_TARGET=test
+    - MAKE_TARGET=itest_lucid
+    - MAKE_TARGET=itest_precise
+    - MAKE_TARGET=itest_trusty
+    - MAKE_TARGET=itest_xenial
+    - MAKE_TARGET=itest_wheezy
+    - MAKE_TARGET=itest_jessie
+    - MAKE_TARGET=itest_stretch
+
+before_install:
+    - pip install tox
+    - sudo apt-get install -y --no-install-recommends zsh
+    # write-safety tests fail otherwise
+    - umask 022
+
+
+script:
+    - make $MAKE_TARGET

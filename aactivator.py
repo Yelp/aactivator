@@ -21,7 +21,7 @@ aactivator will ask before automatically sourcing environments, and optionally
 remember your answer. You can later adjust your per-project preferences in the
 ~/.cache/aactivator/ directory.
 
-see also: https://trac.yelpcorp.com/wiki/aactivator
+see also: https://github.com/Yelp/aactivator
 """
 from __future__ import absolute_import
 from __future__ import print_function

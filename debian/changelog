@@ -1,3 +1,9 @@
+aactivator (1.0.0) unstable; urgency=low
+
+  * Sentimental bump to v1.0.0
+
+ -- Chris Kuehl <ckuehl@yelp.com>  Mon, 11 Jul 2016 15:52:18 -0700
+
 aactivator (1.0.0~dev1) unstable; urgency=low
 
   * Initial release.

@@ -95,8 +95,8 @@ There are two main protections:
 
 * `aactivator` refuses to source environment files which can be modified by
   others. It does this by recursing upwards from the current directory until
-  hitting a filesystem boundary, and that the file (and all of its parents) can
-  be modified by only you and `root`.
+  hitting a filesystem boundary, and checking that the file (and all of its
+  parents) can be modified by only you and `root`.
 
 
 ## Alternatives to aactivator

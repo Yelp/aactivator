@@ -6,6 +6,7 @@ RUN apt-get update  \
         devscripts \
         dumb-init \
         equivs \
+        lintian \
     && apt-get clean
 
 WORKDIR /mnt

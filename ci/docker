@@ -13,7 +13,7 @@ if grep -qE '\<lucid\>' /etc/apt/sources.list; then
     apt-get update
     apt-get install -y --no-install-recommends python-software-properties
 
-    # for python2.7 backport
+    # for python3.4 backport
     add-apt-repository ppa:fkrull/deadsnakes
     # for zsh 5 backport (lucid's zsh segfaults)
     add-apt-repository ppa:blueyed/ppa
@@ -30,13 +30,17 @@ apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     curl \
-    python-setuptools \
-    python2.7 \
-    python2.7-dev \
+    gdebi-core \
+    python3-dev \
     zsh
 
-curl https://bootstrap.pypa.io/get-pip.py | python2.7
-dpkg -i /mnt/dist/*.deb
+if grep -qE '\<lucid\>' /etc/apt/sources.list; then
+    apt-get install -y --no-install-recommends python3.4-dev
+    ln -s /usr/bin/python3.4 /usr/local/bin/python3
+fi
+
+curl https://bootstrap.pypa.io/get-pip.py | python3
+gdebi -n /mnt/dist/*.deb
 pip install -r /mnt/requirements-dev.txt
 pip install /mnt
 

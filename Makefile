@@ -28,16 +28,14 @@ builddeb-docker: docker-builder-image
 	mkdir -p dist
 	docker run -v $(PWD):/mnt $(DOCKER_BUILDER)
 
-ITEST_TARGETS = itest_lucid itest_precise itest_trusty itest_xenial itest_wheezy itest_jessie itest_stretch
+ITEST_TARGETS = itest_lucid itest_trusty itest_xenial itest_jessie itest_stretch
 
 .PHONY: itest $(ITEST_TARGETS)
 itest: $(ITEST_TARGETS)
 
 itest_lucid: _itest-ubuntu-lucid
-itest_precise: _itest-ubuntu-precise
 itest_trusty: _itest-ubuntu-trusty
 itest_xenial: _itest-ubuntu-xenial
-itest_wheezy: _itest-debian-wheezy
 itest_jessie: _itest-debian-jessie
 itest_stretch: _itest-debian-stretch
 

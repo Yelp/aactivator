@@ -10,7 +10,7 @@ Homepage: https://github.com/Yelp/aactivator
 
 Package: aactivator
 Architecture: all
-Depends: python2.7
+Depends: python3
 Description: automatically activate virtual environments
  aactivator automatically activates environments when entering and exiting
  directories.

@@ -246,23 +246,38 @@ def security_check(path):
         )
 
 
+def commands(commands, always=None):
+    """
+    run a set of commands, stopping on the first error
+    The `always` is run whether there was an error or not
+    """
+    cmd = ' &&\n'.join(commands)
+    if always:
+        cmd += '\n' + always
+    return cmd
+
+
 def command_for_path(cmd, path, pwd):
     if path == pwd:
         return cmd
     else:
-        return ' &&\n'.join((
-            'OLDPWD_bak="$OLDPWD"',
-            'cd ' + quote(path),
-            cmd,
-            'cd "$OLDPWD_bak"',
-            'cd ' + quote(pwd),
-            'unset OLDPWD_bak',
-        ))
+        return commands(
+            (
+                'OLDPWD_bak="$OLDPWD"',
+                'cd ' + quote(path),
+                cmd,
+            ),
+            always=commands((
+                'cd "$OLDPWD_bak"',
+                'cd ' + quote(pwd),
+                'unset OLDPWD_bak',
+            ))
+        )
 
 
 def aactivate(path, pwd):
     return command_for_path(
-        ' &&\n'.join((
+        commands((
             'aactivator security-check ' + ACTIVATE,
             'source ./' + ACTIVATE,
             'export %s=%s' % (ENVIRONMENT_VARIABLE, quote(path)),
@@ -278,15 +293,18 @@ def deaactivate(path, pwd):
 
     if os.path.exists(deactivate_path):
         return command_for_path(
-            ' &&\n'.join((
-                'aactivator security-check ' + DEACTIVATE,
-                'source ./' + DEACTIVATE,
-            )) + '\n' + unset,
+            commands(
+                (
+                    'aactivator security-check ' + DEACTIVATE,
+                    'source ./' + DEACTIVATE,
+                ),
+                always=unset,
+            ),
             path,
             pwd,
         )
     else:
-        return ' &&\n'.join((
+        return commands((
             unset,
             error_command('Cannot deactivate. File missing: {0}'.format(deactivate_path))
         ))
@@ -315,7 +333,7 @@ def get_output(environ, pwd='.', get_input=sys.stdin.readline, arg0='/path/to/aa
             result.append(deaactivate(activated_env, pwd))
         if activate_path:
             result.append(aactivate(activate_path, pwd))
-    return ' &&\n'.join(result)
+    return commands(result)
 
 
 def aactivator(args, env):

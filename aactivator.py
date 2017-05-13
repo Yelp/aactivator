@@ -248,7 +248,9 @@ def security_check(path):
 
 def commands(commands, always=None):
     """
-    run a set of commands, stopping on the first error
+    Generate a bash script to run a set of commands, stopping
+    on the first error.
+
     The `always` is run whether there was an error or not
     """
     cmd = ' &&\n'.join(commands)

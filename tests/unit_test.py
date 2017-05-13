@@ -116,7 +116,7 @@ OLDPWD_bak="$OLDPWD" &&
 cd {venv_path} &&
 aactivator security-check .deactivate.sh &&
 source ./.deactivate.sh
-unset AACTIVATOR_ACTIVE &&
+unset AACTIVATOR_ACTIVE
 cd "$OLDPWD_bak" &&
 cd {tmpdir} &&
 unset OLDPWD_bak'''.format(venv_path=str(venv_path), tmpdir=str(tmpdir))
@@ -151,7 +151,7 @@ OLDPWD_bak="$OLDPWD" &&
 cd {venv_path} &&
 aactivator security-check .deactivate.sh &&
 source ./.deactivate.sh
-unset AACTIVATOR_ACTIVE &&
+unset AACTIVATOR_ACTIVE
 cd "$OLDPWD_bak" &&
 cd {venv_path}/deeper &&
 unset OLDPWD_bak &&
@@ -192,7 +192,7 @@ OLDPWD_bak="$OLDPWD" &&
 cd {venv_path} &&
 aactivator security-check .deactivate.sh &&
 source ./.deactivate.sh
-unset AACTIVATOR_ACTIVE &&
+unset AACTIVATOR_ACTIVE
 cd "$OLDPWD_bak" &&
 cd {venv_path}2 &&
 unset OLDPWD_bak &&
@@ -306,3 +306,13 @@ def test_no_is_remembered_until_cd_out(venv_path, tmpdir, no_config, yes_config)
     # cd to a parent directory directory (and back) should
     assert yes_config().find_allowed('/') is None
     assert yes_config().find_allowed(str(child_dir)) == str(venv_path)
+
+
+def test_commands():
+    assert aactivator.commands(('true',)) == 'true'
+    assert aactivator.commands(('foo', 'bar')) == '''\
+foo &&
+bar'''
+    assert aactivator.commands(('try',), 'finally') == '''\
+try
+finally'''

@@ -1,5 +1,5 @@
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    sha: cf550fcab3f12015f8676b8278b30e1a5bc10e70
+    sha: v0.9.1
     hooks:
     -   id: autopep8-wrapper
     -   id: check-docstring-first
@@ -10,6 +10,6 @@
     -   id: flake8
     -   id: trailing-whitespace
 -   repo: https://github.com/asottile/reorder_python_imports
-    sha: 3d86483455ab5bd06cc1069fdd5ac57be5463f10
+    sha: v0.3.5
     hooks:
     -   id: reorder-python-imports

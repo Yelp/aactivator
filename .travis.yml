@@ -7,7 +7,6 @@ language: python
 
 env:
     - MAKE_TARGET=test
-    - MAKE_TARGET=itest_lucid
     - MAKE_TARGET=itest_trusty
     - MAKE_TARGET=itest_xenial
     - MAKE_TARGET=itest_jessie

@@ -4,6 +4,7 @@ services:
     - docker
 
 language: python
+python: '3.6'
 
 env:
     - MAKE_TARGET=test

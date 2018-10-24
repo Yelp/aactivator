@@ -397,3 +397,35 @@ TEST> pwd
         venv2=str(venv2),
     )
     run_test(shell, test, tmpdir)
+
+
+def test_broken_activate(venv_path, tmpdir, shell):
+    """When a activate script doesn't work, aactivator keeps trying it,
+    but you can still cd within the project.
+    """
+    make_venv_in_tempdir(tmpdir)
+    venv_path.join('.activate.sh').write("echo '(activation failure)'; false")
+
+    test = '''\
+TEST> eval "$(aactivator init)"
+TEST> cd {venv_path}/child-dir
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
+Acceptable? (y)es (n)o (N)ever: INPUT> y
+aactivator will remember this: ~/.cache/aactivator/allowed
+(activation failure)
+TEST> pwd
+{venv_path}/child-dir
+(activation failure)
+TEST> cd ..
+(activation failure)
+TEST> pwd
+{venv_path}
+(activation failure)
+TEST> cd ..
+TEST> echo ok
+ok
+'''
+    test = test.format(
+        venv_path=str(venv_path),
+    ) 
+    run_test(shell, test, tmpdir)

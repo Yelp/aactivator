@@ -20,11 +20,6 @@ apt-get install -y --no-install-recommends \
     python3-dev \
     zsh
 
-if grep -qE '\<lucid\>' /etc/apt/sources.list; then
-    apt-get install -y --no-install-recommends python3.4-dev
-    ln -s /usr/bin/python3.4 /usr/local/bin/python3
-fi
-
 curl https://bootstrap.pypa.io/get-pip.py | python3
 gdebi -n /mnt/dist/*.deb
 pip install -r /mnt/requirements-dev.txt
@@ -32,4 +27,4 @@ pip install /mnt
 
 # pytest can't deal with a read-only filesystem
 cp -r /mnt /tmp/test
-py.test -vv /tmp/test
+pytest -vv /tmp/test

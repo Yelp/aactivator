@@ -1,4 +1,3 @@
-sudo: required
 
 services:
     - docker
@@ -8,8 +7,8 @@ python: '3.6'
 
 env:
     - MAKE_TARGET=test
-    - MAKE_TARGET=itest_trusty
     - MAKE_TARGET=itest_xenial
+    - MAKE_TARGET=itest_bionic
     - MAKE_TARGET=itest_jessie
     - MAKE_TARGET=itest_stretch
 

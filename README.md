@@ -14,7 +14,7 @@ Key features of aactivator include:
 * First-class support for both `bash` and `zsh`.
 * Well-tested, with integration tests applied to both supported shells.
 
-aactivator supports Python 2.7, 3.4, and 3.5; it has no dependencies besides
+aactivator supports Python 2.7, 3.4+; it has no dependencies besides
 the standard library.
 
 
@@ -75,7 +75,7 @@ didn't install it somewhere on your `$PATH`).
 ## Motivation
 
 Automatically sourcing virtualenvs is a huge boon to large projects. It means
-that you can directly execute tools like `py.test`, and also that the project
+that you can directly execute tools like `pytest`, and also that the project
 can register command-line tools (via setuptools' `console_scripts` entrypoint)
 for use by contributors.
 

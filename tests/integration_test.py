@@ -254,6 +254,30 @@ TEST> echo
     run_test(shell, test, tmpdir)
 
 
+def test_complains_parent_directory_insecure(venv_path, tmpdir, shell):
+    make_venv_in_tempdir(tmpdir)
+    venv_path.chmod(0o777)
+
+    test = '''\
+TEST> eval "$(aactivator init)"
+TEST> echo
+
+TEST> cd {venv_path}
+aactivator will source .activate.sh and .deactivate.sh at {venv_path}.
+Acceptable? (y)es (n)o (N)ever: INPUT> y
+aactivator will remember this: ~/.cache/aactivator/allowed
+aactivator: Cowardly refusing to source .activate.sh because writeable by others: .
+TEST> echo
+
+aactivator: Cowardly refusing to source .activate.sh because writeable by others: .
+TEST> cd /
+TEST> echo
+
+'''
+    test = test.format(venv_path=str(venv_path))
+    run_test(shell, test, tmpdir)
+
+
 def test_activate_but_no_deactivate(venv_path, tmpdir, deactivate, shell):
     make_venv_in_tempdir(tmpdir)
     deactivate.remove()

@@ -106,6 +106,7 @@ Some alternatives to `aactivator` already exist. For example:
 * [kennethreitz's autoenv][autoenv]
 * [codysoyland's virtualenv-auto-activate][codysoyland]
 * [yourlabs's shell function][yourlabs]
+* [direnv]
 
 These alternatives all have at least one of the following problems (compared to
 aactivator):
@@ -123,3 +124,4 @@ aactivator):
 [codysoyland]: https://gist.github.com/codysoyland/2198913
 [releases]: https://github.com/Yelp/aactivator/releases
 [yourlabs]: http://blog.yourlabs.org/post/21015702927/automatic-virtualenv-activation
+[direnv]: http://github.com/direnv/direnv/

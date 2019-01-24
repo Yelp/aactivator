@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import functools
 import os.path
 import re
+import shutil
 import sys
 
 import pexpect
@@ -396,4 +397,24 @@ TEST> pwd
         venv_path=str(venv_path),
         venv2=str(venv2),
     )
+    run_test(shell, test, tmpdir)
+
+
+def test_aactivator_goes_missing_no_output(venv_path, shell, tmpdir):
+    make_venv_in_tempdir(tmpdir)
+
+    exe = tmpdir.join('exe').strpath
+    src = os.path.join(os.path.dirname(sys.executable), 'aactivator')
+    shutil.copy(src, exe)
+
+    test = '''\
+TEST> eval "$({exe} init)"
+TEST> rm {exe}
+TEST> echo
+
+TEST> cd {venv_path}
+TEST> echo
+
+'''
+    test = test.format(venv_path=str(venv_path), exe=exe)
     run_test(shell, test, tmpdir)

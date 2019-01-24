@@ -44,7 +44,7 @@ __version__ = '1.0.0'
 
 def init(arg0):
     arg0 = os.path.realpath(arg0)
-    cmd = 'eval "`%s`"' % arg0
+    cmd = 'if [ -x {exe} ]; then  eval "`{exe}`"; fi'.format(exe=arg0)
     return '''\
 export AACTIVATOR_VERSION={version}
 alias aactivator={arg0}

@@ -1,3 +1,12 @@
+aactivator (1.0.1) unstable; urgency=medium
+
+  * Switch to Python 3 by default.
+  * Correctly check parent directories during the security check.
+  * Don't error if aactivator goes missing (e.g. is uninstalled while still
+    the shell config).
+
+ -- Chris Kuehl <ckuehl@yelp.com>  Fri, 25 Jan 2019 10:04:59 -0800
+
 aactivator (1.0.0) unstable; urgency=low
 
   * Sentimental bump to v1.0.0

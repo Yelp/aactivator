@@ -96,6 +96,7 @@ def insecure(path):
 
 
 def search_parent_paths(path):
+    path = os.path.abspath(path)
     original_fs_id = fs_id = get_filesystem_id(path)
     previous_path = None
     while original_fs_id == fs_id and path != previous_path:

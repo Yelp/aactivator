@@ -11,7 +11,7 @@ The interface for using this is two files:
 
 A typical setup in a python project:
 
-    $ ln -vs virtualenv_run/bin/activate .activate.sh
+    $ ln -vs venv/bin/activate .activate.sh
     $ echo deactivate > .deactivate.sh
 
 If an environment is already active it will not be re-activated.

@@ -28,15 +28,15 @@ builddeb-docker: docker-builder-image
 	mkdir -p dist
 	docker run -v $(PWD):/mnt $(DOCKER_BUILDER)
 
-ITEST_TARGETS = itest_xenial itest_bionic itest_jessie itest_stretch
+ITEST_TARGETS = itest_xenial itest_bionic itest_stretch itest_buster
 
 .PHONY: itest $(ITEST_TARGETS)
 itest: $(ITEST_TARGETS)
 
 itest_xenial: _itest-ubuntu-xenial
 itest_bionic: _itest-ubuntu-bionic
-itest_jessie: _itest-debian-jessie
 itest_stretch: _itest-debian-stretch
+itest_buster: _itest-debian-buster
 
 _itest-%: builddeb-docker
 	$(DOCKER_RUN_TEST) $(shell sed 's/-/:/' <<< "$*") /mnt/ci/docker

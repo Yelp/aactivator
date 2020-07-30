@@ -9,8 +9,8 @@ env:
     - MAKE_TARGET=test
     - MAKE_TARGET=itest_xenial
     - MAKE_TARGET=itest_bionic
-    - MAKE_TARGET=itest_jessie
     - MAKE_TARGET=itest_stretch
+    - MAKE_TARGET=itest_buster
 
 before_install:
     - pip install tox

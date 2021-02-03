@@ -1,0 +1,23 @@
+---
+name: build
+on: push
+jobs:
+  make:
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        make_target:
+          - test
+          - itest_xenial
+          - itest_bionic
+          - itest_stretch
+          - itest_buster
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - run: pip install tox
+      - run: sudo apt-get install -y --no-install-recommends zsh
+      - run: make ${{ matrix.make_target }}

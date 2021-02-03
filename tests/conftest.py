@@ -7,7 +7,7 @@ import pytest
 from py._path.local import LocalPath
 
 
-@pytest.yield_fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def cwd():
     with LocalPath('/').as_cwd():
         yield

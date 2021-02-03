@@ -1,5 +1,5 @@
 ---
-name: aactivator-ci
+name: build
 on: push
 jobs:
   make:

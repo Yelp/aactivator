@@ -4,6 +4,10 @@ SHELL=bash
 test:
 	tox
 
+.PHONY:	clean
+clean:
+	rm -rf .tox
+
 .PHONY: builddeb
 builddeb:
 	mkdir -p dist

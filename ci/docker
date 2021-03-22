@@ -21,7 +21,7 @@ apt-get install -y --no-install-recommends \
     zsh
 
 # TODO: Remove python3.5 constraint on get-pip.py once xenial is dumped
-curl https://bootstrap.pypa.io/3.5/get-pip.py | python3
+curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3
 gdebi -n /mnt/dist/*.deb
 pip install -r /mnt/requirements-dev.txt
 pip install /mnt

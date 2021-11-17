@@ -17,11 +17,7 @@ builddeb:
 
 # itest / docker build
 DOCKER_BUILDER := aactivator-builder-$(USER)
-
-# XXX: We must put /tmp on a volume (and then chmod it), or the filesystem
-# reports a different device ("filesystem ID") for files than directories,
-# which breaks our path safety checks. Probably due to AUFS layering?
-DOCKER_RUN_TEST := docker run -e DEBIAN_FRONTEND=noninteractive -v /tmp -v $(PWD):/mnt:ro
+DOCKER_RUN_TEST := docker run -e DEBIAN_FRONTEND=noninteractive -e PIP_INDEX_URL -v $(PWD):/mnt:ro
 
 .PHONY: docker-builder-image
 docker-builder-image:
@@ -39,8 +35,7 @@ itest: $(ITEST_TARGETS)
 
 itest_xenial: _itest-ubuntu-xenial
 itest_bionic: _itest-ubuntu-bionic
-itest_stretch: _itest-debian-stretch
-itest_buster: _itest-debian-buster
+itest_focal: _itest-ubuntu-focal
 
 _itest-%: builddeb-docker
 	$(DOCKER_RUN_TEST) $(shell sed 's/-/:/' <<< "$*") /mnt/ci/docker

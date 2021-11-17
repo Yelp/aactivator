@@ -11,8 +11,7 @@ jobs:
           - test
           - itest_xenial
           - itest_bionic
-          - itest_stretch
-          - itest_buster
+          - itest_focal
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2

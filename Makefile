@@ -36,6 +36,7 @@ itest: $(ITEST_TARGETS)
 itest_xenial: _itest-ubuntu-xenial
 itest_bionic: _itest-ubuntu-bionic
 itest_focal: _itest-ubuntu-focal
+itest_jammy: _itest-ubuntu-jammy
 
 _itest-%: builddeb-docker
 	$(DOCKER_RUN_TEST) $(shell sed 's/-/:/' <<< "$*") /mnt/ci/docker

@@ -12,6 +12,7 @@ jobs:
           - itest_xenial
           - itest_bionic
           - itest_focal
+          - itest_jammy
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2

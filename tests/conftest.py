@@ -4,13 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import pytest
-from py._path.local import LocalPath
-
-
-@pytest.fixture(autouse=True)
-def cwd():
-    with LocalPath('/').as_cwd():
-        yield
 
 
 @pytest.fixture

@@ -32,7 +32,7 @@ import os.path
 import stat
 import sys
 from os.path import relpath
-from pipes import quote
+from shlex import quote
 
 
 ENVIRONMENT_VARIABLE = 'AACTIVATOR_ACTIVE'

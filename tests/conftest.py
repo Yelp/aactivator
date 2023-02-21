@@ -3,14 +3,20 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import os
+
 import pytest
-from py._path.local import LocalPath
 
 
 @pytest.fixture(autouse=True)
 def cwd():
-    with LocalPath('/').as_cwd():
+    old_dir = os.getcwd()
+    os.chdir('/')
+
+    try:
         yield
+    finally:
+        os.chdir(old_dir)
 
 
 @pytest.fixture

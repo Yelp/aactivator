@@ -8,6 +8,7 @@ import os.path
 import re
 import shutil
 import sys
+from shlex import quote
 
 import pexpect
 import pytest
@@ -60,8 +61,6 @@ def expect_exact_better(proc, expected):
             proc.buffer.replace(b'\r', b'').replace(b'\n', b'\n    ').decode('utf8'),
         )
         message = '\n'.join(message)
-        if sys.version_info < (3, 0):
-            message = message.encode('utf8')
         raise AssertionError(message)
 
 
@@ -114,7 +113,6 @@ def parse_tests(tests):
 
 def shellquote(cmd):
     """transform a python command-list to a shell command-string"""
-    from pipes import quote
     return ' '.join(quote(arg) for arg in cmd)
 
 

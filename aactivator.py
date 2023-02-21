@@ -39,7 +39,7 @@ ENVIRONMENT_VARIABLE = 'AACTIVATOR_ACTIVE'
 ACTIVATE = '.activate.sh'
 DEACTIVATE = '.deactivate.sh'
 
-__version__ = '1.0.1'
+__version__ = '2.0.0'
 
 
 def init(arg0):

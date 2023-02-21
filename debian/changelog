@@ -1,3 +1,11 @@
+aactivator (2.0.0) unstable; urgency=medium
+
+  * Drop Python 2 support (thanks @kennydo!)
+  * Replace import which is deprecated in python3.11 and removed in
+    python3.13 (thanks @kennydo!)
+
+ -- Chris Kuehl <ckuehl@yelp.com>  Tue, 21 Feb 2023 11:49:23 -0800
+
 aactivator (1.0.1) unstable; urgency=medium
 
   * Switch to Python 3 by default.

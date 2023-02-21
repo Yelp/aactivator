@@ -33,7 +33,7 @@ def get_proc(shell, homedir):
             'PS1': PS1,
             'TOP': os.environ.get('TOP', ''),
             'HOME': str(homedir),
-            'PATH': os.path.dirname(sys.executable) + os.defpath
+            'PATH': os.pathsep.join([os.path.dirname(sys.executable), os.defpath]),
         },
     )
 

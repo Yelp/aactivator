@@ -42,8 +42,8 @@ def expect_exact_better(proc, expected):
     """
     # I'd put a $ on the end of this regex, but sometimes the buffer comes
     # to us too quickly for our assertions
-    before = proc.before
-    after = proc.after
+    before = proc.before or b''
+    after = proc.after or b''
     reg = '^' + re.escape(expected)
     reg = reg.replace('\n', '\r*\n')
     try:

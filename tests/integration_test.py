@@ -26,6 +26,7 @@ def get_proc(shell, homedir):
         shell[0], list(shell[1:]),
         timeout=5,
         env={
+            'BASH_SILENCE_DEPRECATION_WARNING': '1',  # macOS
             'COVERAGE_PROCESS_START': os.environ.get(
                 'COVERAGE_PROCESS_START', '',
             ),

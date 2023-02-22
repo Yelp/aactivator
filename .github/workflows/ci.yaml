@@ -9,7 +9,6 @@ jobs:
       matrix:
         make_target:
           - test
-          - itest_xenial
           - itest_bionic
           - itest_focal
           - itest_jammy

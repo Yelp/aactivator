@@ -1,3 +1,4 @@
+/aactivator-build-deps_*
 /build
 /dist
 /.cache
@@ -6,4 +7,5 @@
 /.tox
 
 *.deb
+*.egg-info
 *.py[co]

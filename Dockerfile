@@ -9,9 +9,14 @@ RUN apt-get update  \
         lintian \
     && apt-get clean
 
-WORKDIR /mnt
+# debuild will fail when running directly against /mnt, so we copy the files we need
+RUN mkdir /build
+COPY debian /build/debian
+COPY Makefile aactivator.py /build/
+WORKDIR /build
+
 CMD [ \
     "dumb-init", \
     "sh", "-euxc", \
-    "mk-build-deps -ir --tool 'apt-get --no-install-recommends -y' debian/control && make builddeb" \
+    "mk-build-deps -ir --tool 'apt-get --no-install-recommends -y' debian/control && make builddeb && cp ./dist/* /mnt/dist" \
 ]

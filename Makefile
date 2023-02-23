@@ -28,7 +28,7 @@ builddeb-docker: docker-builder-image
 	mkdir -p dist
 	docker run -v $(PWD):/mnt $(DOCKER_BUILDER)
 
-ITEST_TARGETS = itest_bionic itest_focal itest_jammy
+ITEST_TARGETS = itest_bionic itest_focal itest_jammy itest_kinetic itest_bullseye
 
 .PHONY: itest $(ITEST_TARGETS)
 itest: $(ITEST_TARGETS)
@@ -36,6 +36,8 @@ itest: $(ITEST_TARGETS)
 itest_bionic: _itest-ubuntu-bionic
 itest_focal: _itest-ubuntu-focal
 itest_jammy: _itest-ubuntu-jammy
+itest_kinetic: _itest-ubuntu-kinetic
+itest_bullseye: _itest-debian-bullseye
 
 _itest-%: builddeb-docker
 	$(DOCKER_RUN_TEST) $(shell sed 's/-/:/' <<< "$*") /mnt/ci/docker

@@ -21,7 +21,7 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
     ],
-    python_requires='>=3.3',
+    python_requires='>=3.7',
     py_modules=['aactivator'],
     entry_points={
         'console_scripts': [

@@ -26,13 +26,14 @@ def get_proc(shell, homedir):
         shell[0], list(shell[1:]),
         timeout=5,
         env={
+            'BASH_SILENCE_DEPRECATION_WARNING': '1',  # macOS
             'COVERAGE_PROCESS_START': os.environ.get(
                 'COVERAGE_PROCESS_START', '',
             ),
             'PS1': PS1,
             'TOP': os.environ.get('TOP', ''),
             'HOME': str(homedir),
-            'PATH': os.path.dirname(sys.executable) + os.defpath
+            'PATH': os.pathsep.join([os.path.dirname(sys.executable), os.defpath]),
         },
     )
 
@@ -42,8 +43,8 @@ def expect_exact_better(proc, expected):
     """
     # I'd put a $ on the end of this regex, but sometimes the buffer comes
     # to us too quickly for our assertions
-    before = proc.before
-    after = proc.after
+    before = proc.before or b''
+    after = proc.after or b''
     reg = '^' + re.escape(expected)
     reg = reg.replace('\n', '\r*\n')
     try:

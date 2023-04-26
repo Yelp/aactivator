@@ -28,7 +28,7 @@ builddeb-docker: docker-builder-image
 	mkdir -p dist
 	docker run -v $(PWD):/mnt $(DOCKER_BUILDER)
 
-ITEST_TARGETS = itest_bionic itest_focal itest_jammy
+ITEST_TARGETS = itest_focal itest_jammy
 
 .PHONY: itest
 itest: $(ITEST_TARGETS)

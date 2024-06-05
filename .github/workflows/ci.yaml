@@ -11,6 +11,7 @@ jobs:
           - test
           - itest_focal
           - itest_jammy
+          - itest_noble
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2

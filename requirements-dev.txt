@@ -1,6 +1,5 @@
-coverage<5  # Remove constraint once off python 3.6.0 on xenial
-coverage-enable-subprocess
-ipdb
+covdefaults
+coverage>=7.13
 pexpect
 pre-commit
 pytest

@@ -89,13 +89,13 @@ def parse_tests(tests):
                 cmd_fn = None
                 output = ''
         elif INPUT in line:
-            if cmd_fn is not None:
-                output += line[:line.index(INPUT)]
-                cmds.append((cmd_fn, cmd, output))
-                cmd = None
-                cmd_fn = None
-                output = ''
-                line = line[line.index(INPUT):]
+            assert cmd_fn is not None
+            output += line[:line.index(INPUT)]
+            cmds.append((cmd_fn, cmd, output))
+            cmd = None
+            cmd_fn = None
+            output = ''
+            line = line[line.index(INPUT):]
 
         if line.startswith(PS1):
             cmd_fn = run_cmd
@@ -106,8 +106,8 @@ def parse_tests(tests):
         else:
             output += line + '\n'
 
-    if cmd_fn is not None:
-        cmds.append((cmd_fn, cmd, output))
+    assert cmd_fn is not None
+    cmds.append((cmd_fn, cmd, output))
 
     return cmds
 

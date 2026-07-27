@@ -9,7 +9,6 @@ jobs:
       matrix:
         make_target:
           - test
-          - itest_focal
           - itest_jammy
           - itest_noble
           - itest_resolute

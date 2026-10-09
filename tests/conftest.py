@@ -3,20 +3,15 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import os
+import contextlib
 
 import pytest
 
 
 @pytest.fixture(autouse=True)
 def cwd():
-    old_dir = os.getcwd()
-    os.chdir('/')
-
-    try:
+    with contextlib.chdir('/'):
         yield
-    finally:
-        os.chdir(old_dir)
 
 
 @pytest.fixture
